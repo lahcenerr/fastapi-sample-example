@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
 import uvicorn
 
 from blog import schemas
@@ -19,8 +19,25 @@ def get_db():
     finally:
         db.close()
 
+@app.get('/blog')
+def all(db: Session = Depends(get_db)):
+    blogs = db.query(models.Blog).all()
 
-@app.post('/blog')
+    return blogs
+
+
+@app.get('/blog/{id}', status_code=status.HTTP_200_OK)
+def show(id, db: Session = Depends(get_db)):
+
+    blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    if not blog:
+        body = f"The blog with id {id} does not exist"
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=body)
+    return blog
+
+
+@app.post('/blog', status_code=status.HTTP_201_CREATED)
 def create_blog(request: schemas.Blog, db: Session = Depends(get_db)):
     new_blog = models.Blog(title=request.title, body=request.body)
     db.add(new_blog)
@@ -29,8 +46,22 @@ def create_blog(request: schemas.Blog, db: Session = Depends(get_db)):
     return new_blog
 
 
-@app.get('/blog')
-def all(db: Session = Depends(get_db)):
-    blogs = db.query(models.Blog).all()
+@app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def destroy(id, db: Session = Depends(get_db)):
 
-    return blogs
+    res = db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
+    if not res:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} doesn't exist"})
+    db.commit()
+    return {'message': f'blog with id {id} has been deleted'}
+
+
+@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
+def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
+    blog = db.query(models.Blog).filter(models.Blog.id == id)
+    print("Blog is...............", blog)
+    if not blog.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} doesn't exist"})
+    blog.update({'title': request.title, 'body': request.body})
+    db.commit()
+    return "Updated"

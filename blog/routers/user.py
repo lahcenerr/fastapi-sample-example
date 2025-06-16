@@ -44,6 +44,6 @@ def destroy_user(id, db: Session = Depends(get_db)):
 
     res = db.query(models.User).filter(models.User.id == id).delete(synchronize_session=False)
     if not res:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"user with id {id} doesn't exist"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"user with id {id} does not exist"})
     db.commit()
     return {'message': f'user with id {id} has been deleted'}

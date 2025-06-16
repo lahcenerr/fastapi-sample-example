@@ -5,15 +5,18 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/blog',
+    tags=['Blogs']
+)
 
-@router.get('/blog', status_code=status.HTTP_200_OK, response_model=List[schemas.showBlog], tags=['Blogs'])
+@router.get('/', status_code=status.HTTP_200_OK, response_model=List[schemas.ShowBlog])
 def all(db: Session = Depends(database.get_db)):
     blogs = db.query(models.Blog).all()
 
     return blogs
 
-@router.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=schemas.showBlog, tags=['Blogs'])
+@router.get('/{id}', status_code=status.HTTP_200_OK, response_model=schemas.ShowBlog)
 def show(id, db: Session = Depends(get_db)):
 
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
@@ -24,7 +27,7 @@ def show(id, db: Session = Depends(get_db)):
     return blog
 
 
-@router.post('/blog', status_code=status.HTTP_201_CREATED, tags=['Blogs'])
+@router.post('/', status_code=status.HTTP_201_CREATED)
 def create_blog(request: schemas.Blog, db: Session = Depends(get_db)):
     new_blog = models.Blog(title=request.title, body=request.body, user_id=1)
     db.add(new_blog)
@@ -33,7 +36,7 @@ def create_blog(request: schemas.Blog, db: Session = Depends(get_db)):
     return new_blog
 
 
-@router.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT, tags=['Blogs'])
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def destroy(id, db: Session = Depends(get_db)):
 
     res = db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
@@ -43,7 +46,7 @@ def destroy(id, db: Session = Depends(get_db)):
     return {'message': f'blog with id {id} has been deleted'}
 
 
-@router.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED, tags=['Blogs'])
+@router.put('/{id}', status_code=status.HTTP_202_ACCEPTED)
 def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id)
     if not blog.first():

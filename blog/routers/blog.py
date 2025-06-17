@@ -41,7 +41,7 @@ def destroy(id, db: Session = Depends(get_db)):
 
     res = db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
     if not res:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} doesn't exist"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} does not exist"})
     db.commit()
     return {'message': f'blog with id {id} has been deleted'}
 
@@ -50,7 +50,7 @@ def destroy(id, db: Session = Depends(get_db)):
 def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id)
     if not blog.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} doesn't exist"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message': f"blog with id {id} does not exist"})
     blog.update({'title': request.title, 'body': request.body})
     db.commit()
     return "Updated"
